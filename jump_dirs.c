@@ -1,14 +1,13 @@
-#include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-int WinMain(HINSTANCE hInstance,
-            HINSTANCE hPrevInstance,
-            LPSTR     lpCmdLine,
-            int       nShowCmd) {
-    int argc = __argc;
-    char **argv = __argv;
+int main(int argc, char **argv) {
 
-    // TODO: Everything!
-
-    return 0;
+    if (argc <= 1) {
+        printf("No arguments!\n");
+        exit(1);
+    } else {
+        printf("%s\n", argv[1]);
+    }
+    exit(0);
 }
