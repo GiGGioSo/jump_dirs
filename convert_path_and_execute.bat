@@ -1,3 +1,3 @@
 @ECHO OFF
 
-%1 %~dpfn2
+%1 %2 -a %~dpfn3

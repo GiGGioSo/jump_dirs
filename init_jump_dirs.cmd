@@ -20,10 +20,11 @@ IF NOT EXIST %_GET_FULLPATH_AND_EXECUTE% (
     EXIT /B 2
 )
 
-DOSKEY z=(%_JUMP_DIRS_EXE_PATH% $*) ^> %_TMP_FILE_PATH% ^&^& (@ECHO OFF ^& FOR /f "delims=" %%d in ('TYPE %_TMP_FILE_PATH%') do CD /d "%%~d" ^& @ECHO ON) ^|^| TYPE %_TMP_FILE_PATH%
+IF "%JUMP_DIRS_DATAFILE%"=="" SET JUMP_DIRS_DATAFILE=%~dp0%_jump_dirs_data
 
-DOSKEY cd=IF "$1" == "/D" (%_GET_FULLPATH_AND_EXECUTE% %_JUMP_DIRS_EXE_PATH% $2 ^& cd $*) ELSE (%_GET_FULLPATH_AND_EXECUTE% %_JUMP_DIRS_EXE_PATH% $1 ^& cd $*)
+DOSKEY z=(%_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% $*) ^> %_TMP_FILE_PATH% ^&^& (@ECHO OFF ^& FOR /f "delims=" %%d in ('TYPE %_TMP_FILE_PATH%') do CD /d "%%~d" ^& @ECHO ON) ^|^| TYPE %_TMP_FILE_PATH% 2>nul
 
-REM ECHO jump_dirs correctly loaded!
+DOSKEY cd=IF "$1" == "/D" (%_GET_FULLPATH_AND_EXECUTE% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% $2 ^& cd $*) ELSE (%_GET_FULLPATH_AND_EXECUTE% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% $1 ^& cd $*)
 
 ENDLOCAL
+
