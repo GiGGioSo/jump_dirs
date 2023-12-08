@@ -12,21 +12,15 @@
  *  -e      echo the best match, don't cd and don't change frecencies
  *  -c      restrict matches to subdirectories of the current directory
  *  -a      don't return a match, just build up the datafile
- *  -x      remove the match from the datafile
+ *  -x      remove directory from the datafile
  *
  */
-
-// function frecent(rank, time) {
-//     # relate frequency and time
-//     dx = t - time
-//         return int(10000 * rank * (3.75/((0.0001 * dx + 1) + 0.25)))
-// }
 
 #define PRINT_DEBUG(...) do {\
     if (debug_output) printf("[DEBUG] "__VA_ARGS__);\
 } while(0)
 
-#define MAX_SCORE 500.f
+#define MAX_SCORE 5000.f
 
 typedef struct Entry {
     float rank;
@@ -46,36 +40,131 @@ BOOL is_directory(LPCSTR path);
 float frecent(float entry_rank, int64_t entry_time, int64_t now);
 int write_datafile(char *path, EntryList *list);
 int read_datafile(char *path, EntryList *list);
+Entry *find_common_entry(EntryList *matches);
 void print_data(EntryList *list);
-
-int add_entry(char *path, EntryList *list);
+int search_match(EntryList *list, char *keyword);
+int add_entry_to_entrylist(EntryList *list, char* path);
+int remove_entry_from_entrylist(EntryList *list, char *path);
+bool match(char *str, char *keyword);
 
 int main(int argc, char **argv) {
-    if (argc <= 1) {
-        printf("No arguments!\n");
+    char *datafile_path = argv[1];
+
+    if (argc <= 2) {
+        EntryList data = {};
+
+        read_datafile(datafile_path, &data);
+        print_data(&data);
         exit(1);
     }
 
-    char *datafile_path = argv[1];
-
     if (strcmp(argv[2], "-a") == 0) {
-
         char *path_to_add = argv[3];
 
         EntryList data = {};
 
         read_datafile(datafile_path, &data);
-        print_data(&data);
         if (is_directory(path_to_add)) {
-            add_entry(path_to_add, &data);
-            print_data(&data);
+            add_entry_to_entrylist(&data, path_to_add);
         }
         write_datafile(datafile_path, &data);
+    } else if (strcmp(argv[2], "-x") == 0) {
+        char *path_to_remove = argv[3];
 
+        EntryList data = {};
+
+        read_datafile(datafile_path, &data);
+
+        remove_entry_from_entrylist(&data, path_to_remove);
+        write_datafile(datafile_path, &data);
+        print_data(&data);
+        exit(1);
     } else {
+        char *keyword = argv[2];
+
+        EntryList data = {};
+
+        read_datafile(datafile_path, &data);
+
+        int search_ret = search_match(&data, keyword);
+        if (search_ret != 0) {
+            print_data(&data);
+        }
+
+        write_datafile(datafile_path, &data);
+        exit(search_ret);
     }
 
     exit(0);
+}
+
+bool starts_with(char *str, char *start) {
+    int start_len = strlen(start);
+
+    if (strlen(str) < start_len) return false;
+
+    return (strncmp(str, start, start_len) == 0);
+}
+
+Entry *find_common_entry(EntryList *matches) {
+    Entry *common = NULL;
+    for (int match_index = 0; match_index < matches->count; ++match_index) {
+        Entry *match = &matches->items[match_index];
+
+        if (common == NULL || strlen(match->path) < strlen(common->path)) {
+            common = match;
+        }
+    }
+
+    for (int match_index = 0; match_index < matches->count; ++match_index) {
+        Entry *match = &matches->items[match_index];
+
+        if (!starts_with(match->path, common->path)) return NULL;
+    }
+
+    return common;
+}
+
+int search_match(EntryList *list, char *keyword) {
+    int64_t now = (int64_t) time(NULL);
+
+    Entry *best_match = NULL;
+    float best_rank = 0.f;
+
+    EntryList matches = {};
+
+    for (int entry_index = 0; entry_index < list->count; ++entry_index) {
+        Entry *entry = &list->items[entry_index];
+        float rank = frecent(entry->rank, entry->time, now);
+
+        if (match(entry->path, keyword)) {
+            Entry new_match = { .rank = rank, .time = now };
+            da_append(&matches, new_match);
+            strncpy(da_last(&matches).path, entry->path,
+                    ARRAY_LENGTH(da_last(&matches).path)-1);
+            if (best_match == NULL || rank > best_rank) {
+                best_match = entry;
+                best_rank = rank;
+            }
+        }
+    }
+
+    // Found something
+    if (best_match) {
+        Entry *common_entry = find_common_entry(&matches);
+        if (common_entry) best_match = common_entry;
+
+        add_entry_to_entrylist(list, best_match->path);
+
+        printf("%s\n", best_match->path);
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+bool match(char *str, char *keyword) {
+    return (strstr(str, keyword) != NULL);
 }
 
 void print_data(EntryList *list) {
@@ -87,7 +176,7 @@ void print_data(EntryList *list) {
     printf("----------------------------\n");
 }
 
-int add_entry(char *path, EntryList *list) {
+int add_entry_to_entrylist(EntryList *list, char* path) {
     int64_t now = (int64_t) time(NULL);
 
     bool entry_was_present = false;
@@ -109,21 +198,34 @@ int add_entry(char *path, EntryList *list) {
         Entry new_entry = { .rank = 1, .time = now };
         da_append(list, new_entry);
         strncpy(da_last(list).path, path,
-                ARRAY_LENGTH(da_last(list).path));
+                ARRAY_LENGTH(da_last(list).path)-1);
     }
 
     // Aging if the sum of all of the ranks is greater than MAX_SCORE
     if (score_count > MAX_SCORE) {
         for (int entry_index = 0; entry_index < list->count; ++entry_index) {
             Entry *entry = &list->items[entry_index];
-            entry->rank = entry->rank * 0.95f;
+            entry->rank = entry->rank * 0.99f;
         }
     }
+    return 0;
+}
+
+int remove_entry_from_entrylist(EntryList *list, char *path) {
+    for (int entry_index = 0; entry_index < list->count; ++entry_index) {
+        Entry *entry = &list->items[entry_index];
+
+        if (strcmp(entry->path, path) == 0) {
+            da_remove(list, entry_index);
+            return 0;
+        }
+    }
+    return 1;
 }
 
 float frecent(float entry_rank, int64_t entry_time, int64_t now) {
-    int64_t dt = entry_time - now;
-    return 10000.f * entry_rank * (3.75f/((0.0001f * (float)dt + 1.f) + 0.25));
+    int64_t dt = now - entry_time;
+    return 10000.f * entry_rank * (3.75f/((0.0001f * (float)dt + 1.f) + 0.25f));
 }
 
 int write_datafile(char *path, EntryList *list) {
@@ -182,7 +284,7 @@ int read_datafile(char *path, EntryList *list) {
             Entry new_entry = { .rank = new_rank, .time = new_time };
             da_append(list, new_entry);
             strncpy(da_last(list).path, new_path,
-                    ARRAY_LENGTH(da_last(list).path));
+                    ARRAY_LENGTH(da_last(list).path)-1);
         }
         PRINT_DEBUG("Read %d entries in total!\n", count);
 

@@ -21,7 +21,7 @@ do {                                                                      \
         (da)->capacity = ((da)->capacity == 0) ?                          \
             DA_INITIAL_CAPACITY : (da)->capacity*2;                       \
         (da)->items = realloc((da)->items,                                \
-                              (da)->capacity*sizeof(*da->items));         \
+                              (da)->capacity*sizeof(*(da)->items));       \
         assert((da)->items != NULL && "Buy more RAM lol");                \
     }                                                                     \
     (da)->items[(da)->count++] = (item);                                  \

@@ -1,6 +1,6 @@
 
 *.exe
 
-tmp_file.txt
+_jump_dirs_tmp_file
 
-_jump_dirs_data
+_jump_dirs_data_file
