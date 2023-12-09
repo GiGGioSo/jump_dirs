@@ -228,6 +228,9 @@ int add_entry_to_entrylist(EntryList *list, char* path) {
         for (int entry_index = 0; entry_index < list->count; ++entry_index) {
             Entry *entry = &list->items[entry_index];
             entry->rank = entry->rank * 0.99f;
+            if (entry->rank < 1.f) {
+                da_remove(list, entry_index);
+            }
         }
     }
     return 0;

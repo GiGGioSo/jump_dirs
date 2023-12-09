@@ -21,8 +21,9 @@ IF NOT EXIST %_EXECUTER% (
 
 IF "%JUMP_DIRS_DATAFILE%"=="" SET JUMP_DIRS_DATAFILE=%~dp0%_jump_dirs_data_file
 
+IF "%JUMP_DIRS_CMD%"=="" SET JUMP_DIRS_CMD=z
 
-DOSKEY z=(cmd /c "%_EXECUTER% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% $*") ^> %_TMP_FILE_PATH% ^&^& (@ECHO OFF ^& FOR /f "delims=" %%d in ('TYPE %_TMP_FILE_PATH%') do CD /d "%%~d" ^& @ECHO ON) ^|^| TYPE %_TMP_FILE_PATH% 2>nul
+DOSKEY %JUMP_DIRS_CMD%=(cmd /c "%_EXECUTER% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% $*") ^> %_TMP_FILE_PATH% ^&^& (@ECHO OFF ^& FOR /f "delims=" %%d in ('TYPE %_TMP_FILE_PATH%') do CD /d "%%~d" ^& @ECHO ON) ^|^| TYPE %_TMP_FILE_PATH% 2>nul
 
 DOSKEY cd=IF "$1" == "/D" (cmd /c "%_EXECUTER% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% -cd $2" ^& cd $*) ELSE (cmd /c "%_EXECUTER% %_JUMP_DIRS_EXE_PATH% %JUMP_DIRS_DATAFILE% -cd $1" ^& cd $*)
 
