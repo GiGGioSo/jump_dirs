@@ -40,6 +40,8 @@ _P.S.: If you move the `jump_dirs` directory you will need to re-start/enable it
 
 - `z -x foo` -> remove `foo` _(gets converted to a fully qualified path)_ from the datafile
 
+- `z -h` / `z --help` -> print a help message
+
 ## Configuration
 
 You can optionally set some environment variables yourself to change some default values.
