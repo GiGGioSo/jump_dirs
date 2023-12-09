@@ -1,6 +1,6 @@
 # jump_dirs
 
-Jump around the most used directories, based on 'frecency'.
+Jump around the most used directories, based on [frecency](https://en.wikipedia.org/wiki/Frecency).
 
 Inspired by [rupa/z](https://github.com/rupa/z).
 
