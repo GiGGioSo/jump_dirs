@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
             add_entry_to_entrylist(&data, path_to_add);
         }
         write_datafile(datafile_path, &data);
+        exit(1);
     } else if (strcmp(argv[2], "-x") == 0) {
         char *path_to_remove = argv[3];
 
@@ -75,8 +76,29 @@ int main(int argc, char **argv) {
 
         read_datafile(datafile_path, &data);
 
-        remove_entry_from_entrylist(&data, path_to_remove);
+        int remove_ret = remove_entry_from_entrylist(&data, path_to_remove);
+        if (remove_ret != 0) {
+            print_data(&data);
+        }
+
         write_datafile(datafile_path, &data);
+
+        exit(1);
+    } else if (strcmp(argv[2], "-e") == 0) {
+        char *keyword = argv[3];
+
+        EntryList data = {};
+
+        read_datafile(datafile_path, &data);
+
+        int search_ret = search_match(&data, keyword);
+
+        // Exit with error no matter what because we just print the match
+        exit(1);
+    } else if (strcmp(argv[2], "-l") == 0) {
+        EntryList data = {};
+
+        read_datafile(datafile_path, &data);
         print_data(&data);
         exit(1);
     } else {
@@ -171,7 +193,7 @@ void print_data(EntryList *list) {
     printf("\n-------- ENTRY LIST --------\n");
     for (int entry_index = 0; entry_index < list->count; ++entry_index) {
         Entry entry = list->items[entry_index];
-        printf("%.2f | %s\n", entry.rank, entry.path);
+        printf("| %6.1f | %s\n", entry.rank, entry.path);
     }
     printf("----------------------------\n");
 }

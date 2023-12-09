@@ -6,7 +6,7 @@ SET _JUMP_DIRS_EXE_PATH=%~dp0%jump_dirs.exe
 
 SET _TMP_FILE_PATH=%~dp0%_jump_dirs_tmp_file
 
-SET _EXECUTER=%~dp0%executer.bat
+SET _EXECUTER=%~dp0%executer.cmd
 
 IF NOT EXIST %_JUMP_DIRS_EXE_PATH% (
     ECHO ERROR: File %_JUMP_DIRS_EXE_PATH% not found!
