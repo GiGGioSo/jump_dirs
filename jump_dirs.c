@@ -10,9 +10,9 @@
  *
  * FLAGS:
  *  -e      echo the best match, don't cd and don't change frecencies
- *  -c      restrict matches to subdirectories of the current directory
  *  -a      don't return a match, just build up the datafile
  *  -x      remove directory from the datafile
+ *  -h      print help message
  *
  */
 
@@ -46,6 +46,7 @@ int search_match(EntryList *list, char *keyword);
 int add_entry_to_entrylist(EntryList *list, char* path);
 int remove_entry_from_entrylist(EntryList *list, char *path);
 bool match(char *str, char *keyword);
+void print_help();
 
 int main(int argc, char **argv) {
     char *datafile_path = argv[1];
@@ -68,6 +69,9 @@ int main(int argc, char **argv) {
             add_entry_to_entrylist(&data, path_to_add);
         }
         write_datafile(datafile_path, &data);
+        exit(1);
+    } else if (strcmp(argv[2], "-h") == 0 || strcmp(argv[2], "--help") == 0) {
+        print_help();
         exit(1);
     } else if (strcmp(argv[2], "-x") == 0) {
         char *path_to_remove = argv[3];
@@ -118,6 +122,22 @@ int main(int argc, char **argv) {
     }
 
     exit(0);
+}
+
+void print_help() {
+    printf(
+"\n z - jump around your most frecent directories!\n"
+"\n"
+" Usage:\n"
+"   z [option] [search]\n"
+"\n"
+" Options:\n"
+"   -e <search>     Print the best match without changing the datafile\n"
+"   -a <path>       Add directory to the datafile, but do not cd\n"
+"   -l              Print the datafile contents\n"
+"   -x <path>       Remove the path from the datafile\n"
+"   -h / --help     Print this help message\n"
+);
 }
 
 bool starts_with(char *str, char *start) {
