@@ -32,6 +32,8 @@ _P.S.: If you move the `jump_dirs` directory you will need to re-start/enable it
 
 - `z foo` -> cd to the most frecent directory matching `foo`
 
+- `z foo bar` -> cd to the most frecent directory matching `foo` and `bar` in that order. (`C:\bar\foo` doesn't match!)
+
 - `z -e foo` -> print the most frecent directory matching `foo`
 
 - `z -l` -> list all directories in the data file
