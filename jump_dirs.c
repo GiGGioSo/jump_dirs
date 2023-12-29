@@ -9,16 +9,6 @@
 
 #include "common.h"
 
-/*
- *
- * FLAGS:
- *  -e      echo the best match, don't cd and don't change frecencies
- *  -a      don't return a match, just build up the datafile
- *  -x      remove directory from the datafile
- *  -h      print help message
- *
- */
-
 #define PRINT_DEBUG(...) do {\
     if (debug_output) wprintf("[DEBUG] "__VA_ARGS__);\
 } while(0)
@@ -45,10 +35,9 @@ int write_datafile(wchar_t *path, EntryList *list);
 int read_datafile(wchar_t *path, EntryList *list);
 Entry *find_common_entry(EntryList *matches);
 void print_data(EntryList *list);
-int search_match(EntryList *list, wchar_t *keyword);
+int search_match(EntryList *list, wchar_t **keyword, int keywords_len);
 int add_entry_to_entrylist(EntryList *list, wchar_t *path);
 int remove_entry_from_entrylist(EntryList *list, wchar_t *path);
-bool match(wchar_t *str, wchar_t *keyword);
 void print_help();
 
 int wmain(int argc, wchar_t **argv) {
@@ -66,6 +55,10 @@ int wmain(int argc, wchar_t **argv) {
     }
 
     if (wcscmp(argv[2], L"-a") == 0) {
+        int arg3_len = wcslen(argv[3]);
+        if (argv[3][arg3_len-1] == L'"') {
+            argv[3][arg3_len-1] = L'\0';
+        }
         wchar_t *path_to_add = argv[3];
 
         EntryList data = {};
@@ -80,6 +73,10 @@ int wmain(int argc, wchar_t **argv) {
         print_help();
         exit(1);
     } else if (wcscmp(argv[2], L"-x") == 0) {
+        int arg3_len = wcslen(argv[3]);
+        if (argv[3][arg3_len-1] == L'"') {
+            argv[3][arg3_len-1] = L'\0';
+        }
         wchar_t *path_to_remove = argv[3];
 
         EntryList data = {};
@@ -95,13 +92,14 @@ int wmain(int argc, wchar_t **argv) {
 
         exit(1);
     } else if (wcscmp(argv[2], L"-e") == 0) {
-        wchar_t *keyword = argv[3];
+        int keywords_len = argc - 3;
+        wchar_t **keywords = argv + 3;
 
         EntryList data = {};
 
         read_datafile(datafile_path, &data);
 
-        int search_ret = search_match(&data, keyword);
+        int search_ret = search_match(&data, keywords, keywords_len);
 
         // Exit with error no matter what because we just print the match
         exit(1);
@@ -112,13 +110,25 @@ int wmain(int argc, wchar_t **argv) {
         print_data(&data);
         exit(1);
     } else {
-        wchar_t *keyword = argv[2];
+        /*
+         * A B C D E F G
+         *
+         * 0 1 2 3 4 5 6
+         *
+         * length = 7
+         *
+         * len(argv[n:]) = length - n
+         *
+         */
+
+        int keywords_len = argc - 2;
+        wchar_t **keywords = argv + 2;
 
         EntryList data = {};
 
         read_datafile(datafile_path, &data);
 
-        int search_ret = search_match(&data, keyword);
+        int search_ret = search_match(&data, keywords, keywords_len);
         if (search_ret != 0) {
             print_data(&data);
         }
@@ -173,8 +183,11 @@ Entry *find_common_entry(EntryList *matches) {
     return common;
 }
 
-int search_match(EntryList *list, wchar_t *keyword) {
+int search_match(EntryList *list, wchar_t **keywords, int keywords_len) {
     int64_t now = (int64_t) time(NULL);
+
+    if (keywords_len == 0) return 1;
+    if (!keywords) return 1;
 
     Entry *best_match = NULL;
     float best_rank = 0.f;
@@ -185,7 +198,23 @@ int search_match(EntryList *list, wchar_t *keyword) {
         Entry *entry = &list->items[entry_index];
         float rank = frecent(entry->rank, entry->time, now);
 
-        if (match(entry->path, keyword)) {
+        wchar_t *search_base = entry->path;
+
+        bool is_match = true;
+        for(int keyword_index = 0;
+            keyword_index < keywords_len;
+            ++keyword_index) {
+            wchar_t *keyword = keywords[keyword_index];
+
+            if ((search_base = wcsstr(search_base, keyword)) != NULL) {
+                search_base += wcslen(keyword);
+            } else {
+                is_match = false;
+                break;
+            }
+        }
+
+        if (is_match) {
             Entry new_match = { .rank = rank, .time = now };
             da_append(&matches, new_match);
             wcsncpy(da_last(&matches).path, entry->path,
@@ -209,10 +238,6 @@ int search_match(EntryList *list, wchar_t *keyword) {
     } else {
         return 1;
     }
-}
-
-bool match(wchar_t *str, wchar_t *keyword) {
-    return (wcsstr(str, keyword) != NULL);
 }
 
 void print_data(EntryList *list) {
