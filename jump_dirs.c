@@ -148,9 +148,9 @@ void print_help() {
         L"   z [option] [search]\n"
         L"\n"
         L" Options:\n"
-        L"   -e <search>     Print the best match without changing the datafile\nL"
+        L"   -e <search>     Print the best match without changing the datafile\n"
         L"   -a <path>       Add directory to the datafile, but do not cd\n"
-        L"   -l              Print the datafile contents\n"
+        L"   -l              Print the datafile contents with their relative frecencies\n"
         L"   -x <path>       Remove the path from the datafile\n"
         L"   -h / --help     Print this help message\n"
     );
@@ -241,10 +241,35 @@ int search_match(EntryList *list, wchar_t **keywords, int keywords_len) {
 }
 
 void print_data(EntryList *list) {
+    int64_t now = (int64_t) time(NULL);
+
+    // Sort the list in descending order based on frecency
+    for (int entry_index = 1; entry_index < list->count; ++entry_index) {
+        int i = entry_index;
+        Entry *entry_to_sort = &list->items[i];
+        float rank_to_sort = frecent(entry_to_sort->rank,
+                                     entry_to_sort->time, now);
+        Entry *entry_to_compare = &list->items[i-1];
+        float rank_to_compare = frecent(entry_to_compare->rank,
+                                        entry_to_compare->time, now);
+        while(i > 0 && rank_to_sort < rank_to_compare) {
+            da_swap(list, i, i-1, Entry);
+            i--;
+            entry_to_sort = &list->items[i];
+            rank_to_sort = frecent(entry_to_sort->rank,
+                                   entry_to_sort->time, now);
+            entry_to_compare = &list->items[i-1];
+            rank_to_compare = frecent(entry_to_compare->rank,
+                                      entry_to_compare->time, now);
+        }
+    }
+
     wprintf(L"\n-------- ENTRY LIST --------\n");
     for (int entry_index = 0; entry_index < list->count; ++entry_index) {
         Entry entry = list->items[entry_index];
-        wprintf(L"| %6.1f | %ls\n", entry.rank, entry.path);
+        wprintf(L"| %10.1f | %ls\n",
+                frecent(entry.rank, entry.time, now),
+                entry.path);
     }
     wprintf(L"----------------------------\n");
 }
