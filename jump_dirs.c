@@ -49,7 +49,13 @@ int wmain(int argc, wchar_t **argv) {
     if (argc <= 2) {
         EntryList data = {};
 
-        read_datafile(datafile_path, &data);
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, read_result);
+            exit(1);
+        }
+
         print_data(&data);
         exit(1);
     }
@@ -63,11 +69,24 @@ int wmain(int argc, wchar_t **argv) {
 
         EntryList data = {};
 
-        read_datafile(datafile_path, &data);
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, read_result);
+            exit(1);
+        }
+
         if (is_directory(path_to_add)) {
             add_entry_to_entrylist(&data, path_to_add);
         }
-        write_datafile(datafile_path, &data);
+
+        int write_result = write_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(
+                L"Could not update the 'jump_dirs' datafile %ls: %d\n",
+                datafile_path, write_result);
+            exit(1);
+        }
         exit(1);
     } else if (wcscmp(argv[2], L"-h") == 0 || wcscmp(argv[2], L"--help") == 0) {
         print_help();
@@ -81,15 +100,27 @@ int wmain(int argc, wchar_t **argv) {
 
         EntryList data = {};
 
-        read_datafile(datafile_path, &data);
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, read_result);
+            exit(1);
+        }
 
         int remove_ret = remove_entry_from_entrylist(&data, path_to_remove);
         if (remove_ret != 0) {
             print_data(&data);
         }
 
-        write_datafile(datafile_path, &data);
+        int write_result = write_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(
+                L"Could not update the 'jump_dirs' datafile %ls: %d\n",
+                datafile_path, write_result);
+            exit(1);
+        }
 
+        // Exit with error no matter what because we just print the match
         exit(1);
     } else if (wcscmp(argv[2], L"-e") == 0) {
         int keywords_len = argc - 3;
@@ -97,7 +128,12 @@ int wmain(int argc, wchar_t **argv) {
 
         EntryList data = {};
 
-        read_datafile(datafile_path, &data);
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, result);
+            exit(1);
+        }
 
         int search_ret = search_match(&data, keywords, keywords_len);
 
@@ -106,9 +142,23 @@ int wmain(int argc, wchar_t **argv) {
     } else if (wcscmp(argv[2], L"-l") == 0) {
         EntryList data = {};
 
-        read_datafile(datafile_path, &data);
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, result);
+            exit(1);
+        }
         print_data(&data);
         exit(1);
+    } else if (wcscmp(argv[2], L"-c") == 0) {
+        EntryList data = {};
+
+        int read_result = read_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, result);
+            exit(1);
+        }
     } else {
         /*
          * A B C D E F G
@@ -133,7 +183,13 @@ int wmain(int argc, wchar_t **argv) {
             print_data(&data);
         }
 
-        write_datafile(datafile_path, &data);
+        int write_result = write_datafile(datafile_path, &data);
+        if (read_result) {
+            wprintf(
+                L"Could not update the 'jump_dirs' datafile %ls: %d\n",
+                datafile_path, write_result);
+            exit(1);
+        }
         exit(search_ret);
     }
 
