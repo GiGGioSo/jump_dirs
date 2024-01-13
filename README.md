@@ -1,4 +1,4 @@
-# jump_dirs
+# jump\_dirs
 
 Jump around the most used directories, based on [frecency](https://en.wikipedia.org/wiki/Frecency).
 
@@ -34,13 +34,15 @@ _P.S.: If you move the `jump_dirs` directory you will need to re-start/enable it
 
 - `z foo bar` -> cd to the most frecent directory matching `foo` and `bar` in that order. (`C:\bar\foo` doesn't match!)
 
-- `z -e foo` -> print the most frecent directory matching `foo`
+- `z -c foo` -> cd to the most frecent directory matching `foo`, restricting the search to subdirectories of the current directory
 
-- `z -l` -> list all directories in the data file
+- `z -e foo` -> print the most frecent directory matching `foo`
 
 - `z -a foo` -> add `foo` _(gets converted to a fully qualified path)_ to the datafile without cd-ing inside of it
 
 - `z -x foo` -> remove `foo` _(gets converted to a fully qualified path)_ from the datafile
+
+- `z -l` -> print all of the entries in the datafile with their current frecency
 
 - `z -h` / `z --help` -> print a help message
 
@@ -51,6 +53,10 @@ You can optionally set some environment variables yourself to change some defaul
 - Set `JUMP_DIRS_CMD` to change the command name (default is `z`).
 
 - Set `JUMP_DIRS_DATAFILE` to change the path of the datafile (default is `<jump_dirs dir>\_jump_dirs_data_file`).
+
+- Set `JUMP_DIRS_MAX_SCORE` to change the aging velocity of the entries, lower to age faster (default is `5000`)
+
+- Set `JUMP_DIRS_CODEPAGE` to change the codepage to which the terminal is set on startup by jump\_dirs with the command `CHCP` (default is `1252`)
 
 ## Uninstall / Disable / Stop
 

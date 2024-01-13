@@ -13,8 +13,6 @@
     if (debug_output) wprintf("[DEBUG] "__VA_ARGS__);\
 } while(0)
 
-#define MAX_SCORE 5000.f
-
 typedef struct Entry {
     float rank;
     int64_t time;
@@ -28,6 +26,7 @@ typedef struct EntryList {
 } EntryList;
 
 bool debug_output = false;
+long max_score = 5000; // 5000 is the actual default, but will be overwritten no matter what
 
 BOOL is_directory(wchar_t *path);
 float frecent(float entry_rank, int64_t entry_time, int64_t now);
@@ -44,9 +43,27 @@ int wmain(int argc, wchar_t **argv) {
     setlocale(LC_ALL, "");
     setlocale(LC_NUMERIC, "en_US.UTF-8");
 
+    if (argc < 3) {
+        wprintf(L"Unsufficient arguments given! (%d instead of 3)\n", argc);
+        for (int i = 0; i < argc; ++i) {
+            wprintf(L"  argument %d: '%s'\n", i, argv[i]);
+        }
+        wprintf(L"\n\nThis jump_dirs installation is broken: try restarting the terminal.\nIf it's still broken, please open up an Issue on GitHub (GiGGioSo/jump_dirs).\n");
+        exit(1);
+    }
+
     wchar_t *datafile_path = argv[1];
 
-    if (argc <= 2) {
+    // Check validity of the max score passed as argument
+    wchar_t *max_score_raw = argv[2];
+    wchar_t *end = NULL;
+    long max_score = wcstol(max_score_raw, &end, 10);
+    if (max_score <= 0 || end == NULL || *end != L'\0') {
+        wprintf(L"'%ls' is an invalid max score value!\n\nCorrect the JUMP_DIRS_MAX_SCORE variable and restart the terminal.\n", max_score_raw);
+        exit(1);
+    }
+
+    if (argc == 3) {
         EntryList data = {};
 
         int read_result = read_datafile(datafile_path, &data);
@@ -60,12 +77,12 @@ int wmain(int argc, wchar_t **argv) {
         exit(1);
     }
 
-    if (wcscmp(argv[2], L"-a") == 0) {
-        int arg3_len = wcslen(argv[3]);
-        if (argv[3][arg3_len-1] == L'"') {
-            argv[3][arg3_len-1] = L'\0';
+    if (wcscmp(argv[3], L"-a") == 0) {
+        int arg4_len = wcslen(argv[4]);
+        if (argv[4][arg4_len-1] == L'"') {
+            argv[4][arg4_len-1] = L'\0';
         }
-        wchar_t *path_to_add = argv[3];
+        wchar_t *path_to_add = argv[4];
 
         EntryList data = {};
 
@@ -88,15 +105,15 @@ int wmain(int argc, wchar_t **argv) {
             exit(1);
         }
         exit(1);
-    } else if (wcscmp(argv[2], L"-h") == 0 || wcscmp(argv[2], L"--help") == 0) {
+    } else if (wcscmp(argv[3], L"-h") == 0 || wcscmp(argv[3], L"--help") == 0) {
         print_help();
         exit(1);
-    } else if (wcscmp(argv[2], L"-x") == 0) {
-        int arg3_len = wcslen(argv[3]);
-        if (argv[3][arg3_len-1] == L'"') {
-            argv[3][arg3_len-1] = L'\0';
+    } else if (wcscmp(argv[3], L"-x") == 0) {
+        int arg4_len = wcslen(argv[4]);
+        if (argv[4][arg4_len-1] == L'"') {
+            argv[4][arg4_len-1] = L'\0';
         }
-        wchar_t *path_to_remove = argv[3];
+        wchar_t *path_to_remove = argv[4];
 
         EntryList data = {};
 
@@ -122,16 +139,16 @@ int wmain(int argc, wchar_t **argv) {
 
         // Exit with error no matter what because we just print the match
         exit(1);
-    } else if (wcscmp(argv[2], L"-e") == 0) {
-        int keywords_len = argc - 3;
-        wchar_t **keywords = argv + 3;
+    } else if (wcscmp(argv[3], L"-e") == 0) {
+        int keywords_len = argc - 4;
+        wchar_t **keywords = argv + 4;
 
         EntryList data = {};
 
         int read_result = read_datafile(datafile_path, &data);
         if (read_result) {
             wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
-                    datafile_path, result);
+                    datafile_path, read_result);
             exit(1);
         }
 
@@ -139,31 +156,22 @@ int wmain(int argc, wchar_t **argv) {
 
         // Exit with error no matter what because we just print the match
         exit(1);
-    } else if (wcscmp(argv[2], L"-l") == 0) {
+    } else if (wcscmp(argv[3], L"-l") == 0) {
         EntryList data = {};
 
         int read_result = read_datafile(datafile_path, &data);
         if (read_result) {
             wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
-                    datafile_path, result);
+                    datafile_path, read_result);
             exit(1);
         }
         print_data(&data);
         exit(1);
-    } else if (wcscmp(argv[2], L"-c") == 0) {
-        EntryList data = {};
-
-        int read_result = read_datafile(datafile_path, &data);
-        if (read_result) {
-            wprintf(L"Could not read the 'jump_dirs' datafile %ls: %d\n",
-                    datafile_path, result);
-            exit(1);
-        }
     } else {
         /*
-         * A B C D E F G
+         * exe data score D E F G
          *
-         * 0 1 2 3 4 5 6
+         * 0   1    2     3 4 5 6
          *
          * length = 7
          *
@@ -171,8 +179,8 @@ int wmain(int argc, wchar_t **argv) {
          *
          */
 
-        int keywords_len = argc - 2;
-        wchar_t **keywords = argv + 2;
+        int keywords_len = argc - 3;
+        wchar_t **keywords = argv + 3;
 
         EntryList data = {};
 
@@ -180,15 +188,15 @@ int wmain(int argc, wchar_t **argv) {
 
         int search_ret = search_match(&data, keywords, keywords_len);
         if (search_ret != 0) {
-            print_data(&data);
-        }
-
-        int write_result = write_datafile(datafile_path, &data);
-        if (read_result) {
-            wprintf(
-                L"Could not update the 'jump_dirs' datafile %ls: %d\n",
-                datafile_path, write_result);
-            exit(1);
+            // print_data(&data);
+        } else {
+            int write_result = write_datafile(datafile_path, &data);
+            if (write_result) {
+                wprintf(
+                    L"Could not update the 'jump_dirs' datafile %ls: %d\n",
+                    datafile_path, write_result);
+                exit(1);
+            }
         }
         exit(search_ret);
     }
@@ -201,14 +209,15 @@ void print_help() {
         L"\n z - jump around your most frecent directories!\n"
         L"\n"
         L" Usage:\n"
-        L"   z [option] [search]\n"
+        L"   z [option] [search items]\n"
         L"\n"
         L" Options:\n"
-        L"   -e <search>     Print the best match without changing the datafile\n"
-        L"   -a <path>       Add directory to the datafile, but do not cd\n"
-        L"   -l              Print the datafile contents with their relative frecencies\n"
-        L"   -x <path>       Remove the path from the datafile\n"
-        L"   -h / --help     Print this help message\n"
+        L"   -c <item1> <item2> ...   Restrict matches to subdirectories of the current directory\n"
+        L"   -e <item1> <item2> ...   Print the best match without changing the datafile\n"
+        L"   -a <path>                Add directory to the datafile, but do not cd\n"
+        L"   -x <path>                Remove the path from the datafile\n"
+        L"   -l                       Print the datafile contents with their relative frecencies\n"
+        L"   -h / --help              Print this help message\n"
     );
 }
 
@@ -355,8 +364,8 @@ int add_entry_to_entrylist(EntryList *list, wchar_t* path) {
                 ARRAY_LENGTH(da_last(list).path)-1);
     }
 
-    // Aging if the sum of all of the ranks is greater than MAX_SCORE
-    if (score_count > MAX_SCORE) {
+    // Aging if the sum of all of the ranks is greater than max_score
+    if (score_count > max_score) {
         for (int entry_index = 0; entry_index < list->count; ++entry_index) {
             Entry *entry = &list->items[entry_index];
             entry->rank = entry->rank * 0.99f;
