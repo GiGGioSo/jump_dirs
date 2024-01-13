@@ -56,7 +56,7 @@ You can optionally set some environment variables yourself to change some defaul
 
 - Set `JUMP_DIRS_MAX_SCORE` to change the aging velocity of the entries, lower to age faster (default is `5000`)
 
-- Set `JUMP_DIRS_CODEPAGE` to change the codepage to which the terminal is set on startup by jump\_dirs with the command `CHCP` (default is `1252`)
+- Set `JUMP_DIRS_CODEPAGE` to change the codepage to which the terminal is set on startup by `jump_dirs` with the command `CHCP` (default is `1252`)
 
 ## Uninstall / Disable / Stop
 
